@@ -14,28 +14,6 @@ function output = main(tgt_path)
         ui.id = input('User id: ');
         ui.block = input('Block number: ');
 
-		% save the data in a flat file
-        if ~exist('data', 'dir')
-           mkdir('data');
-        end
-
-		% use the date in the filename to prevent overwrites
-		date_string = datestr(now, 30);
-		date_string = date_string(3:end - 2);
-		tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
-		filename = ['data/id', num2str(ui.id), '_', tfile_string, ...
-		            '_', date_string, '.txt'];
-
-        % write header!
-		headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice', 't_choice'};
-		fid = fopen(filename, 'wt');
-		csvFun = @(str)sprintf('%s,', str);
-		xchar = cellfun(csvFun, headers, 'UniformOutput', false);
-		xchar = strcat(xchar{:});
-		xchar = strcat(xchar(1:end-1), '\n');
-		fprintf(fid, xchar);
-		fclose(fid);
-
         % read tgt file
         if nargin == 0
             tgt_name = GuessTgt(ui);
@@ -49,6 +27,29 @@ function output = main(tgt_path)
         output(:, 4) = tgt.left_reward;
         output(:, 5) = tgt.right_reward;
 
+        % save the data in a flat file
+        if ~exist('data', 'dir')
+           mkdir('data');
+        end
+
+        % use the date in the filename to prevent overwrites
+        date_string = datestr(now, 30);
+        date_string = date_string(3:end - 2);
+        tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
+        filename = ['data/id', num2str(ui.id), '_', tfile_string, ...
+                    '_', date_string, '.txt'];
+
+        % write header!
+        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice', 't_choice'};
+        fid = fopen(filename, 'wt');
+        csvFun = @(str)sprintf('%s,', str);
+        xchar = cellfun(csvFun, headers, 'UniformOutput', false);
+        xchar = strcat(xchar{:});
+        xchar = strcat(xchar(1:end-1), '\n');
+        fprintf(fid, xchar);
+        fclose(fid);
+
+        % initialize audio
         audio = PsychAudio(2);
         FillAudio(audio, 'misc/sounds/beep.wav', 1);
 		FillAudio(audio, 'misc/sounds/smw_coin.wav', 2);
@@ -121,6 +122,11 @@ function output = main(tgt_path)
 			WaitSecs(0.1);
         end
 
+        WipeScreen(screen);
+        DrawFormattedText(screen.window, ['Final Score: ', num2str(points)],...
+                          'center', 'center', screen.text_colour);
+        FlipScreen(screen);
+        WaitSecs(1.5);
         csvwrite(filename, output, '-append');
 		PsychPurge;
 

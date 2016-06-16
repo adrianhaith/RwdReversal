@@ -31,6 +31,10 @@ Run
 ```
 DownloadPsychtoolbox('/home/foo/toolbox')
 ```
+or
+```
+DownloadPsychtoolbox('C:/toolbox')
+```
 
 These steps take a fair amount of time, so plan ahead!
 
