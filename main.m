@@ -20,12 +20,14 @@ function output = main(tgt_path)
             tgt_path = ['misc/tfiles/', tgt_name];
         end
 		[tgt, header, rest] = ParseTgt(tgt_path, ',');
-        output = zeros(length(tgt.trial), 7); % id, block, trial, left_reward, right_reward, choice, t_choice
+        output = zeros(length(tgt.trial), 9); % id, block, trial, left_reward, right_reward, choice, t_choice
         output(:, 1) = ui.id;
         output(:, 2) = ui.block;
         output(:, 3) = tgt.trial;
         output(:, 4) = tgt.left_reward;
         output(:, 5) = tgt.right_reward;
+        output(:, 6) = tgt.iti;
+
 
         % save the data in a flat file
         if ~exist('data', 'dir')
@@ -40,7 +42,7 @@ function output = main(tgt_path)
                     '_', date_string, '.txt'];
 
         % write header!
-        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice_1_left', 'time_choice'};
+        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice_1_left', 'time_choice', 'reward'};
         fid = fopen(filename, 'wt');
         csvFun = @(str)sprintf('%s,', str);
         xchar = cellfun(csvFun, headers, 'UniformOutput', false);
@@ -58,8 +60,8 @@ function output = main(tgt_path)
                              'big_screen', consts.big_screen, ...
                              'skip_tests', consts.skip_tests);
 
-        press_feedback = KeyFeedback(screen.dims(1), screen.dims(2),...
-                                     'num_boxes', 2);
+        % press_feedback = KeyFeedback(screen.dims(1), screen.dims(2),...
+        %                              'num_boxes', 2);
 
         resp_device = KeyboardResponse(1:2,...
                                        'possible_keys', consts.possible_keys, ...
@@ -78,7 +80,7 @@ function output = main(tgt_path)
                               'center', 0.2 * screen.dims(1), screen.green);
 		    DrawFormattedText(screen.window, ['+ ', num2str(points)], ...
 			                  'center', 'center', screen.text_colour);
-			DrawOutline(press_feedback, screen.window);
+			% DrawOutline(press_feedback, screen.window);
 			time_reference = FlipScreen(screen);
 			StartKeyResponse(resp_device);
             PlayAudio(audio, 1, 0);
@@ -92,34 +94,40 @@ function output = main(tgt_path)
 		    end
             StopKeyResponse(resp_device);
 
-			output(ii, 6) = temp_out(1);
-			output(ii, 7) = temp_out(2) - time_reference;
+			output(ii, 7) = temp_out(1);
+			output(ii, 8) = temp_out(2) - time_reference;
             % display feedback
 			if temp_out(1) == 1 && tgt.left_reward(ii) == 1
                 PlayAudio(audio, 2, 0);
 			    feedback_colour = 'green';
 				points = points + 10;
+                reward = 1;
+
 			elseif temp_out(1) == 2 && tgt.right_reward(ii) == 1
                 PlayAudio(audio, 2, 0);
 			    feedback_colour = 'green';
 				points = points + 10;
+                reward = 1;
 			else
 			    feedback_colour = 'red';
+                reward = 0;
 			end
+            output(ii, 9) = reward;
+
 			WipeScreen(screen);
 			DrawFormattedText(screen.window, ['+ ', num2str(points)], ...
 				  'center', 'center', screen.text_colour);
-            DrawOutline(press_feedback, screen.window);
-			DrawFill(press_feedback, screen.window, feedback_colour, feedback_vector, 0);
+            % DrawOutline(press_feedback, screen.window);
+			% DrawFill(press_feedback, screen.window, feedback_colour, feedback_vector, 0);
 			FlipScreen(screen);
 			WaitSecs(0.2);
             % wait 200 ms until next trial
 			WipeScreen(screen);
 			DrawFormattedText(screen.window, ['+ ', num2str(points)], ...
 				  'center', 'center', screen.text_colour);
-            DrawOutline(press_feedback, screen.window);
+            % DrawOutline(press_feedback, screen.window);
 			FlipScreen(screen);
-			WaitSecs(0.1);
+			WaitSecs(tgt.iti(ii));
         end
 
         WipeScreen(screen);
