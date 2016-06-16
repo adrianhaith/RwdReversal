@@ -40,7 +40,7 @@ function output = main(tgt_path)
                     '_', date_string, '.txt'];
 
         % write header!
-        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice', 't_choice'};
+        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice_1_left', 'time_choice'};
         fid = fopen(filename, 'wt');
         csvFun = @(str)sprintf('%s,', str);
         xchar = cellfun(csvFun, headers, 'UniformOutput', false);
