@@ -42,7 +42,7 @@ function output = main(tgt_path)
                     '_', date_string, '.txt'];
 
         % write header!
-        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice_1_left', 'time_choice', 'reward'};
+        headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'trial_iti', 'choice_1_left', 'time_choice', 'reward'};
         fid = fopen(filename, 'wt');
         csvFun = @(str)sprintf('%s,', str);
         xchar = cellfun(csvFun, headers, 'UniformOutput', false);
@@ -135,11 +135,11 @@ function output = main(tgt_path)
                           'center', 'center', screen.text_colour);
         FlipScreen(screen);
         WaitSecs(1.5);
-        csvwrite(filename, output, '-append');
+        csvwrite(filename, output, '-append', 'precision', 4);
 		PsychPurge;
 
     catch err
-        csvwrite(filename, output, '-append');
+        csvwrite(filename, output, '-append', 'precision', 4);
         PsychPurge;
         rethrow(err);
     end
