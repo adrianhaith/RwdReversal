@@ -14,6 +14,29 @@ function output = main(tgt_path)
         ui.id = input('User id: ');
         ui.block = input('Block number: ');
 
+		% save the data in a flat file
+        if ~exist('data', 'dir')
+           mkdir('data');
+        end
+
+		% use the date in the filename to prevent overwrites
+		date_string = datestr(now, 30);
+		date_string = date_string(3:end - 2);
+		tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
+		filename = ['data/id', num2str(ui.id), '_', tfile_string, ...
+		            '_', date_string, '.txt'];
+
+        % write header!
+		headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice', 't_choice'};
+		fid = fopen(filename, 'wt');
+		csvFun = @(str)sprintf('%s,', str);
+		xchar = cellfun(csvFun, headers, 'UniformOutput', false);
+		xchar = strcat(xchar{:});
+		xchar = strcat(xchar(1:end-1), '\n');
+		fprintf(fid, xchar);
+		fclose(fid);
+
+        % read tgt file
         if nargin == 0
             tgt_name = GuessTgt(ui);
             tgt_path = ['misc/tfiles/', tgt_name];
@@ -75,7 +98,7 @@ function output = main(tgt_path)
                 PlayAudio(audio, 2, 0);
 			    feedback_colour = 'green';
 				points = points + 10;
-			elseif temp_out(2) == 1 && tgt.right_reward(ii) == 1
+			elseif temp_out(1) == 2 && tgt.right_reward(ii) == 1
                 PlayAudio(audio, 2, 0);
 			    feedback_colour = 'green';
 				points = points + 10;
@@ -98,32 +121,11 @@ function output = main(tgt_path)
 			WaitSecs(0.1);
         end
 
-		% save the data in a flat file
-        if ~exist('data', 'dir')
-           mkdir('data');
-        end
-
-		% use the date in the filename to prevent overwrites
-		date_string = datestr(now, 30);
-		date_string = date_string(3:end - 2);
-		tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
-		filename = ['data/id', num2str(ui.id), '_', tfile_string, ...
-		            '_', date_string, '.txt'];
-
-        % write header!
-		headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice', 't_choice'};
-		fid = fopen(filename, 'wt');
-		csvFun = @(str)sprintf('%s,', str);
-		xchar = cellfun(csvFun, headers, 'UniformOutput', false);
-		xchar = strcat(xchar{:});
-		xchar = strcat(xchar(1:end-1), '\n');
-		fprintf(fid, xchar);
-		fclose(fid);
-
         csvwrite(filename, output, '-append');
 		PsychPurge;
 
     catch err
+        csvwrite(filename, output, '-append');
         PsychPurge;
         rethrow(err);
     end
