@@ -26,9 +26,9 @@ function output = main(tgt_path)
         output(:, 4) = tgt.left_reward;
         output(:, 5) = tgt.right_reward;
 
-        %audio = PsychAudio(2);
-        %FillAudio(audio, 'misc/sounds/beep.wav', 1);
-		%FillAudio(aud, 'misc/sounds/smw_coin.wav', 2);
+        audio = PsychAudio(2);
+        FillAudio(audio, 'misc/sounds/beep.wav', 1);
+		FillAudio(audio, 'misc/sounds/smw_coin.wav', 2);
 
         screen = PsychScreen('reversed', consts.reversed,...
                              'big_screen', consts.big_screen, ...
@@ -57,6 +57,7 @@ function output = main(tgt_path)
 			DrawOutline(press_feedback, screen.window);
 			time_reference = FlipScreen(screen);
 			StartKeyResponse(resp_device);
+            PlayAudio(audio, 1, 0);
 
 			% record first press
 			temp_out = [-1 -1];
@@ -64,16 +65,18 @@ function output = main(tgt_path)
 		    while temp_out(1) == -1
 		        [temp_out, feedback_vector] = CheckKeyResponse(resp_device, feedback_vector);
 		        WaitSecs(0.02);
-		    end	
+		    end
             StopKeyResponse(resp_device);
 
 			output(ii, 6) = temp_out(1);
 			output(ii, 7) = temp_out(2) - time_reference;
             % display feedback
 			if temp_out(1) == 1 && tgt.left_reward(ii) == 1
+                PlayAudio(audio, 2, 0);
 			    feedback_colour = 'green';
 				points = points + 10;
 			elseif temp_out(2) == 1 && tgt.right_reward(ii) == 1
+                PlayAudio(audio, 2, 0);
 			    feedback_colour = 'green';
 				points = points + 10;
 			else
@@ -83,7 +86,7 @@ function output = main(tgt_path)
 			DrawFormattedText(screen.window, ['+ ', num2str(points)], ...
 				  'center', 'center', screen.text_colour);
             DrawOutline(press_feedback, screen.window);
-			DrawFill(press_feedback, screen.window, feedback_colour, feedback_vector, 0); 
+			DrawFill(press_feedback, screen.window, feedback_colour, feedback_vector, 0);
 			FlipScreen(screen);
 			WaitSecs(0.2);
             % wait 200 ms until next trial
@@ -106,18 +109,18 @@ function output = main(tgt_path)
 		tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
 		filename = ['data/id', num2str(ui.id), '_', tfile_string, ...
 		            '_', date_string, '.txt'];
-					
+
         % write header!
 		headers = {'id', 'block', 'trial', 'left_reward', 'right_reward', 'choice', 't_choice'};
 		fid = fopen(filename, 'wt');
-		csvFun = @(str)sprintf('%s\t', str);
+		csvFun = @(str)sprintf('%s,', str);
 		xchar = cellfun(csvFun, headers, 'UniformOutput', false);
 		xchar = strcat(xchar{:});
 		xchar = strcat(xchar(1:end-1), '\n');
 		fprintf(fid, xchar);
 		fclose(fid);
 
-        dlmwrite(filename, output, '-append');
+        csvwrite(filename, output, '-append');
 		PsychPurge;
 
     catch err
