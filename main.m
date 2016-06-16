@@ -26,18 +26,17 @@ function output = main(tgt_path)
         output(:, 4) = tgt.left_reward;
         output(:, 5) = tgt.right_reward;
 
-        audio = PsychAudio(1);
-        FillAudio(audio, 'misc/sounds/beep.wav', 1);
+        %audio = PsychAudio(1);
+        %FillAudio(audio, 'misc/sounds/beep.wav', 1);
 
         screen = PsychScreen('reversed', consts.reversed,...
                              'big_screen', consts.big_screen, ...
                              'skip_tests', consts.skip_tests);
 
         press_feedback = KeyFeedback(screen.dims(1), screen.dims(2),...
-                              'num_boxes', length(unique(tgt.finger_index)));
+                                     'num_boxes', 2);
 
-        valid_indices = unique(tgt.finger_index);
-        resp_device = KeyboardResponse(valid_indices,...
+        resp_device = KeyboardResponse([1, 2],...
                                        'possible_keys', consts.possible_keys, ...
                                        'timing_tolerance', consts.timing_tolerance,...
                                        'force_min', consts.force_min,...
@@ -46,20 +45,43 @@ function output = main(tgt_path)
 
         WaitSecs(0.5); % breather before block starts
 
-		% use the date in the filename to prevent overwrites
-		date_string = datestr(now, 30);
-		date_string = date_string(3:end - 2);
-		tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
-		filename = ['data/id', num2str(ui.subject_id), '_', tfile_string, ...
-		            '_', date_string, '.txt'];
-
+		points = 0;
         for ii = 1:length(tgt.trial)
             % Display 'GO!' at start of trial
-
-            % record first press (see old version)
-
+			WipeScreen(screen);
+            DrawFormattedText(screen.window, 'Go!',...
+                              'center', 0.2 * screen.dims(1), screen.green);
+		    DrawFormattedText(screen.window, ['+ ', num2str(points)], ...
+			                  'center', 'center', screen.text_colour);
+			DrawOutline(press_feedback, screen.window);
+			time_reference = FlipScreen(screen);
+			% record first press
+			temp_out = [-1 -1];
+			feedback_vector = zeros(1, 2);
+		    while temp_out(1) == -1
+		        [temp_out, feedback_vector] = CheckKeyResponse(resp_device, feedback_vector);
+		        WaitSecs(0.01);
+		    end	
+            
+			output(:, 6) = temp_out(1);
+			output(:, 7) = temp_out(2) - time_reference;
             % display feedback
-
+			if temp_out(1) == 1 && prop_left == 1
+			    feedback_colour = 'green';
+				points = points + 10;
+			elseif temp_out(2) == 1 && prop_right == 1
+			    feedback_colour = 'green';
+				points = points + 10;
+			else
+			    feedback_colour = 'red';
+			end
+			
+			DrawFormattedText(screen.window, ['+ ', num2str(points)], ...
+				  'center', 'center', screen.text_colour);
+            DrawOutline(press_feedback, screen.window);
+			DrawFill(press_feedback, screen.window, feedback_colour, feedback_vector, 1); 
+			FlipScreen(screen);
+			WaitSecs(0.2);
             % wait 200 ms until next trial
 
         end
@@ -71,7 +93,22 @@ function output = main(tgt_path)
            mkdir('data');
         end
 
+		% use the date in the filename to prevent overwrites
+		date_string = datestr(now, 30);
+		date_string = date_string(3:end - 2);
+		tfile_string = tgt_path((max(strfind(tgt_path, '/'))+1):end - 4);
+		filename = ['data/id', num2str(ui.subject_id), '_', tfile_string, ...
+		            '_', date_string, '.txt'];
+					
         % write header!
+		fid = fopen(filename, 'wt');
+		csvFun = @(str)sprintf('%s, ', str);
+		xchar = cellfun(csvFun, headers, 'UniformOutput', false);
+		xchar = strcat(xchar{:});
+		xchar = strcat(xchar(1:end-1), '\n');
+		fprintf(fid, xchar);
+		fclose(fid);
+
         dlmwrite(filename, output, '-append');
 		PsychPurge;
 
