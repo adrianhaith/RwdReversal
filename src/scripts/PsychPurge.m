@@ -18,14 +18,3 @@ try PsychPortAudio('Close');
 catch
     warning('No active audio device');
 end
-
-try
-    if IsOctave
-        save('-mat7-binary', filename, 'output');
-    else
-        save(filename, 'output', '-v7');
-    end
-catch
-    warning('No data available!');
-end
-
