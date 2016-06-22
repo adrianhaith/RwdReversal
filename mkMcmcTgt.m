@@ -1,4 +1,4 @@
-function final_output = mkMcmcTgt(block_number, prop_left, prop_right, prop_swap, number_trials)
+function final_output = mkMcmcTgt(block_number, prop_left, prop_right, swap_trials, number_trials)
 % block_number is the block number
 % prop_left is the proportion of the time a reward is given for moving left
 % prop_right is the proportion of the time a reward is given for moving right
@@ -17,24 +17,12 @@ function final_output = mkMcmcTgt(block_number, prop_left, prop_right, prop_swap
 	final_output(:, 2) = 1:number_trials;
     final_output(:, 3) = binornd(1, prop_left, number_trials, 1);
     final_output(:, 4) = binornd(1, prop_right, number_trials, 1);
-    final_output(:, 5) = .5 + rand(number_trials, 1);
+    final_output(:, 5) = .5 + rand(number_trials, 1); % ITI
 
-	start_swap = round(prop_swap * number_trials);
     % let prop_swap be vector
-    for ii = 1:length(prop_swap)
-        if ii == 1
-            start_swap = round(prop_swap(ii) * number_trials);
-            stop_swap = number_trials;
-        elseif ii == length(prop_swap)
-            start_swap = round(prop_swap(ii) * number_trials);
-            stop_swap = number_trials;
-        else
-            start_swap = round(prop_swap(ii - 1) * number_trials);
-            stop_swap = round(prop_swap(ii) * number_trials);
-        end
-	    final_output(start_swap:stop_swap, [4, 3]) = final_output(start_swap:stop_swap, [3, 4]);
+    for ii = 1:length(swap_trials)
+        final_output(swap_trials(ii):end, [4 3]) = final_output(swap_trials(ii):end, [3 4]);
     end
-
 
     headers = {'block', 'trial', 'left_reward', 'right_reward', 'iti'};
 
