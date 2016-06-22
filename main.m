@@ -135,11 +135,11 @@ function output = main(tgt_path)
                           'center', 'center', screen.text_colour);
         FlipScreen(screen);
         WaitSecs(1.5);
-        csvwrite(filename, output, '-append', 'precision', 3);
+        dlmwrite(filename, output, '-append', 'delimiter', ',', 'precision', 3);
 		PsychPurge;
 
     catch err
-        csvwrite(filename, output, '-append', 'precision', 3);
+        csvwrite(filename, output, '-append', 'delimiter', ',', 'precision', 3);
         PsychPurge;
         rethrow(err);
     end

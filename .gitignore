@@ -5,4 +5,4 @@ octave-workspace
 */octave-workspace
 *.m~
 *.asv
-data
+data/*
