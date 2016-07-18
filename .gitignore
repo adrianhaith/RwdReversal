@@ -5,4 +5,5 @@ octave-workspace
 */octave-workspace
 *.m~
 *.asv
+*/*.tgt
 data/*
