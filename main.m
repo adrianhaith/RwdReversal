@@ -14,21 +14,23 @@ function output = main(tgt_path)
         ui.id = input('User id: ');
         ui.block = input('Block number: ');
 
+        switch_eligible = 0;
+        
         % read tgt file
         if nargin == 0
             tgt_name = GuessTgt(ui);
             tgt_path = ['misc/tfiles/', tgt_name];
         end
 		[tgt, header, rest] = ParseTgt(tgt_path, ',');
-        output = zeros(length(tgt.trial), 9); % id, block, trial, left_reward, right_reward, choice, t_choice
+        output = zeros(length(tgt.trial), 11); % id, block, trial, left_reward, right_reward, choice, t_choice
         output(:, 1) = ui.id;
         output(:, 2) = ui.block;
         output(:, 3) = tgt.trial;
-        output(:, 4) = tgt.left_reward;
-        output(:, 5) = tgt.right_reward;
+        output(:, 4) = tgt.rich_reward;
+        output(:, 5) = tgt.poor_reward;
         output(:, 6) = tgt.iti;
-
-
+        output(:, 7) = tgt.rich_init;
+        
         % save the data in a flat file
         if ~exist('data', 'dir')
            mkdir('data');
@@ -73,6 +75,9 @@ function output = main(tgt_path)
         WaitSecs(0.5); % breather before block starts
 
 		points = 0;
+        consecutive_correct = 0;
+        current_rich = tgt.rich_init(1);
+        
         for ii = 1:length(tgt.trial)
             % Display 'GO!' at start of trial
 			WipeScreen(screen);
@@ -97,21 +102,47 @@ function output = main(tgt_path)
 			output(ii, 7) = temp_out(1);
 			output(ii, 8) = temp_out(2) - time_reference;
             % display feedback
-			if temp_out(1) == 1 && tgt.left_reward(ii) == 1
-                PlayAudio(audio, 2, 0);
-			    feedback_colour = 'green';
-				points = points + 10;
-                reward = 1;
-
-			elseif temp_out(1) == 2 && tgt.right_reward(ii) == 1
-                PlayAudio(audio, 2, 0);
-			    feedback_colour = 'green';
-				points = points + 10;
-                reward = 1;
-			else
-			    feedback_colour = 'red';
-                reward = 0;
-			end
+            
+			if temp_out(1) == current_rich
+                consecutive_correct = consecutive_correct+1;
+                %disp('right')
+                if tgt.rich_reward(ii) ==1
+                    PlayAudio(audio, 2, 0);
+            	    feedback_colour = 'green';
+                	points = points + 10;
+                    reward = 1;
+                else
+                    feedback_colour = 'red';
+                    reward = 0;
+                end
+            else
+                consecutive_correct = 0;
+                %disp('wrong')
+                if tgt.poor_reward(ii) == 1
+                    PlayAudio(audio, 2, 0);
+        		    feedback_colour = 'green';
+            		points = points + 10;
+                    reward = 1;
+                else
+                    feedback_colour = 'red';
+                    reward = 0;
+                end
+            end
+            
+            % flip current rich action if 4 correct guesses in a row
+            if consecutive_correct == 4
+                switch_eligible = 1;
+            end
+            if(switch_eligible)
+                if(rand(1)<.25) % switch with prob 0.25
+                    current_rich = 3-current_rich; % flip 1 to a 2, or 2 to a 1;
+                    switch_eligible = 0;
+                    consecutive_correct = 0;
+                    output(ii, 10) = 1;
+                end
+                %disp('switched')
+            end
+            output(ii, 11) = current_rich;
             output(ii, 9) = reward;
 
 			WipeScreen(screen);
@@ -139,7 +170,7 @@ function output = main(tgt_path)
 		PsychPurge;
 
     catch err
-        csvwrite(filename, output, '-append', 'delimiter', ',', 'precision', 3);
+        dlmwrite(filename, output, '-append', 'delimiter', ',', 'precision', 3);
         PsychPurge;
         rethrow(err);
     end
